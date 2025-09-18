@@ -12,9 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checar código
       - name: Checar código
         uses: actions/checkout@v3
 
+      # 2️⃣ Criar JSON de entrada a partir do payload do Figma
       - name: Criar JSON de entrada
         id: create-json
         uses: jsdaniell/create-json@1.1.2
@@ -23,23 +25,25 @@ jobs:
           json: ${{ github.event.client_payload.tokens }}
           dir: 'input'
 
+      # 3️⃣ Instalar Node.js 18
       - name: Instalar Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # 4️⃣ Instalar dependências
       - name: Instalar dependências
         run: npm ci
 
+      # 5️⃣ Construir tokens
       - name: Construir tokens
         run: npm run build
 
-      # 🔹 Verifica se houve mudanças
+      # 6️⃣ Verificar se houve mudanças
       - name: Verificar mudanças
         id: check-changes
         run: |
-          git diff --quiet
-          if [ $? -eq 0 ]; then
+          if git diff --quiet; then
             echo "## Sem alterações nos tokens. Nenhum PR será criado."
             echo "changes=false" >> $GITHUB_ENV
           else
@@ -47,13 +51,13 @@ jobs:
             echo "changes=true" >> $GITHUB_ENV
           fi
 
-      # 🔹 Cria Pull Request somente se houver mudanças
+      # 7️⃣ Criar Pull Request somente se houver mudanças
       - name: Criar Pull Request
         if: env.changes == 'true'
         uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
-          branch: update-tokens
+          token: ${{ secrets.PAT_TOKEN }}        # <- seu Personal Access Token
+          branch: update-tokens                  # nome da branch do PR
           commit-message: "style: Atualizar tokens de design"
           title: "Atualizar tokens de design"
           body: "Tokens de design foram atualizados via Figma e precisam ser revisados."
