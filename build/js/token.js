@@ -3,7 +3,7 @@
  */
 
 module.exports = {
-  ColorGray900: "#121214",
+  ColorGray901: "#121214",
   VariableCollectionWhite: "#ffffff",
   VariableCollectionGray200: "#c1c1c4",
   VariableCollectionGray500: "#50505c",
