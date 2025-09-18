@@ -1,7 +1,4 @@
-name: Gerar tokens de design
-
-permissions:
-  contents: write
+name: Generate design tokens
 
 on:
   repository_dispatch:
@@ -12,12 +9,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checar código
-      - name: Checar código
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      # 2️⃣ Criar JSON de entrada a partir do payload do Figma
-      - name: Criar JSON de entrada
+      - name: Create input JSON
         id: create-json
         uses: jsdaniell/create-json@1.1.2
         with:
@@ -25,40 +19,23 @@ jobs:
           json: ${{ github.event.client_payload.tokens }}
           dir: 'input'
 
-      # 3️⃣ Instalar Node.js 18
-      - name: Instalar Node.js
+      - name: Install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # 4️⃣ Instalar dependências
-      - name: Instalar dependências
-        run: npm ci
+      - name: Install dependencies
+        run: npm ci 
 
-      # 5️⃣ Construir tokens
-      - name: Construir tokens
+      - name: Build  
         run: npm run build
-
-      # 6️⃣ Verificar se houve mudanças
-      - name: Verificar mudanças
-        id: check-changes
-        run: |
-          if git diff --quiet; then
-            echo "## Sem alterações nos tokens. Nenhum PR será criado."
-            echo "changes=false" >> $GITHUB_ENV
-          else
-            echo "## Alterações detectadas."
-            echo "changes=true" >> $GITHUB_ENV
-          fi
-
-      # 7️⃣ Criar Pull Request somente se houver mudanças
-      - name: Criar Pull Request
-        if: env.changes == 'true'
+      
+      - name: Create PR
         uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}        # <- seu Personal Access Token
-          branch: update-tokens                  # nome da branch do PR
-          commit-message: "style: Atualizar tokens de design"
-          title: "Atualizar tokens de design"
-          body: "Tokens de design foram atualizados via Figma e precisam ser revisados."
-          delete-branch: false
+          commit-message: "style: Update design tokens"
+          title: ${{ github.event.client_payload.commitMessage || 'Update design tokens' }}
+          body: "Design tokens have been updated via Figma and need to be reviewed."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: 'main
