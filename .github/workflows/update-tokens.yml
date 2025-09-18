@@ -1,4 +1,7 @@
-name: Generate design tokens
+name: Gerar tokens de design
+
+permissions:
+  contents: write
 
 on:
   repository_dispatch:
@@ -9,9 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checar código
+        uses: actions/checkout@v3
 
-      - name: Create input JSON
+      - name: Criar JSON de entrada
         id: create-json
         uses: jsdaniell/create-json@1.1.2
         with:
@@ -19,23 +23,38 @@ jobs:
           json: ${{ github.event.client_payload.tokens }}
           dir: 'input'
 
-      - name: Install Node.js
+      - name: Instalar Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm ci 
+      - name: Instalar dependências
+        run: npm ci
 
-      - name: Build  
+      - name: Construir tokens
         run: npm run build
-      
-      - name: Create PR
+
+      # 🔹 Verifica se houve mudanças
+      - name: Verificar mudanças
+        id: check-changes
+        run: |
+          git diff --quiet
+          if [ $? -eq 0 ]; then
+            echo "## Sem alterações nos tokens. Nenhum PR será criado."
+            echo "changes=false" >> $GITHUB_ENV
+          else
+            echo "## Alterações detectadas."
+            echo "changes=true" >> $GITHUB_ENV
+          fi
+
+      # 🔹 Cria Pull Request somente se houver mudanças
+      - name: Criar Pull Request
+        if: env.changes == 'true'
         uses: peter-evans/create-pull-request@v4
         with:
-          commit-message: "style: Update design tokens"
-          title: ${{ github.event.client_payload.commitMessage || 'Update design tokens' }}
-          body: "Design tokens have been updated via Figma and need to be reviewed."
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: 'main'
+          token: ${{ secrets.PAT_TOKEN }}
+          branch: update-tokens
+          commit-message: "style: Atualizar tokens de design"
+          title: "Atualizar tokens de design"
+          body: "Tokens de design foram atualizados via Figma e precisam ser revisados."
+          delete-branch: false
